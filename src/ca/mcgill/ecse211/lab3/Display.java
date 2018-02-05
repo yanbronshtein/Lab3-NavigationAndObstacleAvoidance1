@@ -52,11 +52,14 @@ public class Display implements Runnable {
       // Retrieve x, y and Theta information
       position = odo.getXYT();
       
-      // Print x,y, and theta information
+      //get distance from USsensor
+      
+      // Print x,y, theta and distance information
       DecimalFormat numberFormat = new DecimalFormat("######0.00");
       lcd.drawString("X: " + numberFormat.format(position[0]), 0, 0);
       lcd.drawString("Y: " + numberFormat.format(position[1]), 0, 1);
       lcd.drawString("T: " + numberFormat.format(position[2]), 0, 2);
+//      lcd.drawString("US Distance:"  + numberFormat.format(cont.readUSDistance()) 0, 3);
       
       // this ensures that the data is updated only once every period
       updateEnd = System.currentTimeMillis();

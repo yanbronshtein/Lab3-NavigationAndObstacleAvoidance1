@@ -92,7 +92,7 @@ public class Navigation extends Thread {
 		double deltaY = y - odoReadingsY;
 		
 		// calculate the minimum angle
-		double minAngle = Math.atan2( deltaX, deltaY) - odoReadingsT;
+		double minAngle = Math.toDegrees(Math.atan2( deltaX, deltaY)) - odoReadingsT;
 					
 		// turn to the minimum angle
 		turnTo(minAngle);

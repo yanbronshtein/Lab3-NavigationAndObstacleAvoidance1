@@ -4,6 +4,7 @@ import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.TextLCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
@@ -15,7 +16,7 @@ public class Lab3 {
 	// Left motor connected to output A
 	// Right motor connected to output D
 	private static final Port sensorPort = LocalEV3.get().getPort("S1");
-	private static final EV3LargeRegulatedMotor sensorMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("B"));
+	private static final EV3MediumRegulatedMotor sensorMotor = new EV3MediumRegulatedMotor(LocalEV3.get().getPort("B"));
 	private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
 	private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
 
@@ -54,7 +55,7 @@ public class Lab3 {
 				&& buttonChoice != Button.ID_RIGHT);
 
 		if (buttonChoice == Button.ID_LEFT) {
-			NavigationUS navigationUS = new NavigationUS(leftMotor, rightMotor, sensorMotor, odometer, TRACK, WHEEL_RAD);
+			NavigationUS navigationUS = new NavigationUS(leftMotor, rightMotor, sensorMotor, odometer, TRACK, WHEEL_RAD); 
 			usPoller = new UltrasonicPoller(usDistance, usData, navigationUS);
 			//start our odometer
 			// Start odometer and display threads

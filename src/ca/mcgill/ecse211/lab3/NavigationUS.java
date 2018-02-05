@@ -1,24 +1,28 @@
 package ca.mcgill.ecse211.lab3;
 
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.motor.EV3MediumRegulatedMotor;
 
 public class NavigationUS extends Thread implements UltrasonicController {
 
 	// vehicle variables
 	private static Odometer odometer;
-	private static OdometerData odoReadings;
-	private static EV3LargeRegulatedMotor leftMotor, rightMotor, sensorMotor;
-	private final double RADIUS, TRACK;
+	private static EV3LargeRegulatedMotor leftMotor, rightMotor; 
+	private static EV3MediumRegulatedMotor sensorMotor;
+	private final double WHEEL_RAD, TRACK;
 	private final int MOTOR_ACCELERATION = 200;
-	
+	private final double TILEDIMENSION = 30.48;
+
+
 	// navigation variables
 	private static final int FORWARD_SPEED = 250, ROTATE_SPEED = 100;
 	private static boolean isNavigating = true;
 	private static double navigatingX, navigatingY;
-	
+
 	// variables to store sensor data
-	private int distance, filterControl;
-	
+	private static int distance; 
+	private int filterControl;
+
 	// wall follower variables
 	private static final int motorLow = 50, motorHigh = 200, bandCenter = 10, bandwidth = 3, FILTER_OUT = 20;
 
@@ -26,17 +30,21 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	private double initialAngleAtBlock;
 	private static boolean hasBlockPassed = false;
 	private static boolean isPassingBlock = false;
+	
+	//to print distance
+	
+	
 
-	public NavigationUS(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor,  EV3LargeRegulatedMotor sensorMotor,
+	public NavigationUS(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor,  EV3MediumRegulatedMotor sensorMotor,
 			Odometer odometer, double TRACK, double WHEEL_RAD) {
 		this.leftMotor = leftMotor;
 		this.rightMotor = rightMotor;
 		this.sensorMotor = sensorMotor;
 		this.odometer = odometer;
-		this.RADIUS = Lab3.WHEEL_RAD;
-		this.TRACK = Lab3.TRACK;
+		this.WHEEL_RAD = WHEEL_RAD;
+		this.TRACK = TRACK;
 	}
-	
+
 	/**
 	 * Reads our sensor distance
 	 */
@@ -44,23 +52,28 @@ public class NavigationUS extends Thread implements UltrasonicController {
 		return this.distance;
 	}
 	
+//	public int getDistance() {
+//		
+//	}
+
 	/**
 	 * Processes our sensor data and acts accordingly based on its readings
 	 */
 	@Override
 	public void processUSData(int distance) {
-		double[] odoData = odoReadings.getXYT();
+		double[] odoData = odometer.getXYT();
 		double odoReadingsX, odoReadingsY, odoReadingsT;
 		odoReadingsX = odoData[0];
 		odoReadingsY = odoData[1];
 		odoReadingsT = odoData[2];
 		// filter out invalid samples of data
 		filterData(distance);
-		
+		System.out.println("SensorDist is " + distance);
+
 		// will be true if we are in the process of getting around obstacle
 		if ( !isNavigating() && !hasBlockPassed ) {
 			// this means we have passed our object, continue to destination
-			if (initialAngleAtBlock - odoReadingsT >= Math.PI/2) {
+			if (initialAngleAtBlock - odoReadingsT >= 90) {
 				hasBlockPassed = true;
 				leftMotor.stop(true);
 				rightMotor.stop(true);
@@ -69,10 +82,10 @@ public class NavigationUS extends Thread implements UltrasonicController {
 					motor.stop();
 					motor.setAcceleration(MOTOR_ACCELERATION);
 				}
-				if ( navigatingX == 0 && navigatingY == 60) {
-					travelTo(0,60);
+				if ( navigatingX == 0 && navigatingY == 2 * TILEDIMENSION) {
+					travelTo(0,2 * TILEDIMENSION);
 				}
-				travelTo(60,0);
+				travelTo(2 * TILEDIMENSION,0);
 				return;
 			}
 			// otherwise execute our wall follow logic
@@ -85,10 +98,10 @@ public class NavigationUS extends Thread implements UltrasonicController {
 				prepareForWallFollower();
 			}
 		}
-		
-		
+
+
 	}
-	
+
 	/**
 	 * Our main run method
 	 * 
@@ -100,12 +113,12 @@ public class NavigationUS extends Thread implements UltrasonicController {
 			motor.setAcceleration(MOTOR_ACCELERATION);
 		}
 		// travel to coordinates
-		travelTo(0, 60);
+		travelTo(0, 2 * TILEDIMENSION);
 		if (!isPassingBlock) {
-			travelTo(60, 0);
+			travelTo(2 * TILEDIMENSION, 0);
 		}
 	}
-	
+
 	/**
 	 * Determine how much the motor must rotate for vehicle to reach a certain distance
 	 * 
@@ -128,7 +141,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	private static int convertAngle(double radius, double TRACK, double angle) {
 		return convertDistance(radius, Math.PI * TRACK * angle / 360.0);
 	}
-	
+
 	/**
 	 * A method to drive our vehicle to a certain cartesian coordinate
 	 * 
@@ -136,38 +149,37 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	 * @param y Y-Coordinate
 	 */
 	private void travelTo(double x, double y) {
-		isNavigating = true;
-		navigatingX = x;
-		navigatingY = y;
-		double[] odoData = odoReadings.getXYT();
+
+		double[] odoData; //Store XYT as outlined in OdometerData.java
+		odoData = odometer.getXYT();
 		double odoReadingsX, odoReadingsY, odoReadingsT;
 		odoReadingsX = odoData[0];
 		odoReadingsY = odoData[1];
 		odoReadingsT = odoData[2];
-		
+		isNavigating = true;
 		double deltaX = x - odoReadingsX;
 		double deltaY = y - odoReadingsY;
-		
+
 		// calculate the minimum angle
-		double minAngle = Math.atan2( deltaX, deltaY) - odoReadingsT;
-					
+		double minAngle = Math.toDegrees(Math.atan2( deltaX, deltaY)) - odoReadingsT;
+
 		// turn to the minimum angle
 		turnTo(minAngle);
-		
+
 		// calculate the distance to next point
 		double distance  = Math.hypot(deltaX, deltaY);
-		
+
 		// move to the next point
 		leftMotor.setSpeed(FORWARD_SPEED);
 		rightMotor.setSpeed(FORWARD_SPEED);
-		leftMotor.rotate(convertDistance(RADIUS,distance), true);
-		rightMotor.rotate(convertDistance(RADIUS, distance), false);
+		leftMotor.rotate(convertDistance(WHEEL_RAD,distance), true);
+		rightMotor.rotate(convertDistance(WHEEL_RAD, distance), false);
 
 		leftMotor.stop(true);
 		rightMotor.stop(true);
 		isNavigating = false;
 	}
-	
+
 	/**
 	 * A method to turn our vehicle to a certain angle
 	 * 
@@ -176,18 +188,22 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	private void turnTo(double theta) {
 		leftMotor.setSpeed(ROTATE_SPEED);
 		rightMotor.setSpeed(ROTATE_SPEED);
-		
-		if(theta < 0) { // if angle is negative, turn to the left
-			leftMotor.rotate(-convertAngle(RADIUS, TRACK, -(theta*180)/Math.PI), true);
-			rightMotor.rotate(convertAngle(RADIUS, TRACK, -(theta*180)/Math.PI), false);
+		if(theta < -180) { // if angle is negative, turn to the left
+			leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, theta + 360), true);
+			rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, theta + 360), false);
 		} 
-		else { // angle is positive, turn to the right
-			leftMotor.rotate(convertAngle(RADIUS, TRACK, (theta*180)/Math.PI), true);
-			rightMotor.rotate(-convertAngle(RADIUS, TRACK, (theta*180)/Math.PI), false);
+
+		else if (theta > 180) { // angle is positive, turn to the right
+			leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, theta - 360), true);
+			rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, theta -360), false);
 		}
-		
+		else {
+			leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, theta), true);
+			rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, theta), false);
+		}
+
 	}
-	
+
 	/**
 	 * A method to determine whether another thread has called travelTo and turnTo methods or not
 	 * 
@@ -196,8 +212,8 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	private boolean isNavigating() {
 		return isNavigating; 
 	}
-	
-	
+
+
 	/**
 	 * A method to filter out invalid samples of data
 	 */
@@ -222,14 +238,14 @@ public class NavigationUS extends Thread implements UltrasonicController {
 			this.distance = distance;
 		}
 	}
-	
+
 	/**
 	 * A method to that implements our wall following logic
 	 */
 	private void excecuteWallFollow() {
 		// calculate our offset from the bandCenter
 		int error = distance - bandCenter - 5; // -5 for distance from sensor to side of vehicle
-		
+
 		// Keep moving forward if vehicle is within threshold value
 		if ( Math.abs(error) < this.bandwidth ) {
 			steerStraight();
@@ -249,19 +265,19 @@ public class NavigationUS extends Thread implements UltrasonicController {
 			}
 		}
 	}
-	
-	
+
+
 	/**
 	 * A method to turn our vehicle
 	 */
 	private void prepareForWallFollower() {
 		isNavigating = false;
 		isPassingBlock = true;
-		turnTo(Math.PI/2); // turn our angle 90 degrees
+		turnTo(Math.toDegrees(Math.PI/2)); // turn our angle 90 degrees
 		sensorMotor.setSpeed(100);					
 		sensorMotor.rotate(-100); // turn our sensor toward the wall
 	}
-	
+
 	/**
 	 * Method to steer the vehicle in a straight forward direction
 	 */
@@ -271,7 +287,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 		leftMotor.forward();
 		rightMotor.forward();
 	}
-	
+
 	/**
 	 * Method to steer the vehicle right
 	 */
@@ -281,10 +297,10 @@ public class NavigationUS extends Thread implements UltrasonicController {
 		leftMotor.forward();
 		rightMotor.forward();
 	}
-	
-    /**
-     * Method to steer the vehicle left
-     */
+
+	/**
+	 * Method to steer the vehicle left
+	 */
 	public void steerLeft() {
 		leftMotor.setSpeed(motorLow);			
 		rightMotor.setSpeed(motorHigh);
@@ -292,5 +308,5 @@ public class NavigationUS extends Thread implements UltrasonicController {
 		rightMotor.forward();
 	}
 
-	
+
 }
