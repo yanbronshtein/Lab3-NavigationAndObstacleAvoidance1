@@ -2,6 +2,7 @@ package ca.mcgill.ecse211.lab3;
 
 import java.text.DecimalFormat;
 
+import ca.mcgill.ecse211.lab3.UltrasonicController;
 import lejos.hardware.lcd.TextLCD;
 
 
@@ -15,6 +16,7 @@ public class Display implements Runnable {
   private double[] position;
   private final long DISPLAY_PERIOD = 25;
   private long timeout = Long.MAX_VALUE;
+  private UltrasonicController cont;
 
   /**
    * This is the class constructor
@@ -59,7 +61,7 @@ public class Display implements Runnable {
       lcd.drawString("X: " + numberFormat.format(position[0]), 0, 0);
       lcd.drawString("Y: " + numberFormat.format(position[1]), 0, 1);
       lcd.drawString("T: " + numberFormat.format(position[2]), 0, 2);
-//      lcd.drawString("US Distance:"  + numberFormat.format(cont.readUSDistance()) 0, 3);
+      lcd.drawString("US Distance:"  + numberFormat.format(cont.readUSDistance()), 0, 3);
       
       // this ensures that the data is updated only once every period
       updateEnd = System.currentTimeMillis();

@@ -1,7 +1,14 @@
 package ca.mcgill.ecse211.lab3;
 
 
-
+/**
+ * <h1> Lab3 - Navigation And Obstacle Avoidance </h1>
+ * This class implements motion without obstacle avoidance simply based on the internal workings of brick
+ * 
+ * @author Yaniv Bronshtein
+ * @author Varad Kothari
+ * @version 1.0
+ *  */
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 
 public class Navigation extends Thread {
@@ -16,7 +23,6 @@ public class Navigation extends Thread {
 	
 	// navigation variables
 	private static final int FORWARD_SPEED = 250, ROTATE_SPEED = 100;
-	private static boolean isNavigating = true;
 	private final double TILEDIMENSION = 30.48;
 
 	public Navigation(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor, Odometer odometer, double TRACK, double WHEEL_RAD) {
@@ -28,7 +34,7 @@ public class Navigation extends Thread {
 	}
 	
 	/**
-	 * Our main run method
+	 * run method where coordinate map defined
 	 */
 	public void run() {
 		//reset motors
@@ -40,14 +46,8 @@ public class Navigation extends Thread {
 		travelTo( 2 * TILEDIMENSION, TILEDIMENSION); //(2,1)
 		travelTo(TILEDIMENSION, TILEDIMENSION); //(1,1)
 		travelTo(TILEDIMENSION,2 * TILEDIMENSION); //(1,2)
-
-		//travelTo(TILEDIMENSION, 2* TILEDIMENSION);
 		travelTo(2 * TILEDIMENSION , 0);
-		// travel to coordinates
-//				travelTo(60, 30);
-//				travelTo(30, 30);
-//				travelTo(30, 60);
-//				travelTo(60, 0);
+	
 	}
 	
 	/**
@@ -62,7 +62,7 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Determine the angle our motors need to rotate in order for vehicle to turn a certain angle 
+	 * Determine the angle wheel motors need to rotate to for robot to turn to desired angle 
 	 * 
 	 * @param radius
 	 * @param TRACK
@@ -74,33 +74,36 @@ public class Navigation extends Thread {
 	}
 	
 	/**
-	 * A method to drive our vehicle to a certain cartesian coordinate
+	 * Method to 
 	 * 
 	 * @param x X-Coordinate
 	 * @param y Y-Coordinate
 	 */
 	private void travelTo(double x, double y) {
 		
-		double[] odoData; //Store XYT as outlined in OdometerData.java
+		double odoReadingsX, odoReadingsY, odoReadingsT, deltaX, deltaY, minAngle, distance;
+		double[] odoData; //to store Odometer Readings for x, y, and theta
 		odoData = odometer.getXYT();
-		double odoReadingsX, odoReadingsY, odoReadingsT;
+		
 		odoReadingsX = odoData[0];
 		odoReadingsY = odoData[1];
 		odoReadingsT = odoData[2];
-		isNavigating = true;
-		double deltaX = x - odoReadingsX;
-		double deltaY = y - odoReadingsY;
 		
-		// calculate the minimum angle
-		double minAngle = Math.toDegrees(Math.atan2( deltaX, deltaY)) - odoReadingsT;
+		
+		//calculated change in robot position
+		deltaX = x - odoReadingsX;
+		deltaY = y - odoReadingsY;
+		
+		// calculate the minimum angle robot must turn to go straight at next point
+		minAngle = Math.toDegrees(Math.atan2( deltaX, deltaY)) - odoReadingsT;
 					
 		// turn to the minimum angle
 		turnTo(minAngle);
 		
 		// calculate the distance to next point
-		double distance  = Math.hypot(deltaX, deltaY);
+		distance  = Math.hypot(deltaX, deltaY);
 		
-		// move to the next point
+		// move straight to next point
 		leftMotor.setSpeed(FORWARD_SPEED);
 		rightMotor.setSpeed(FORWARD_SPEED);
 		leftMotor.rotate(convertDistance(WHEEL_RAD,distance), true);
@@ -108,7 +111,6 @@ public class Navigation extends Thread {
 
 		leftMotor.stop(true);
 		rightMotor.stop(true);
-		isNavigating = false;
 	}
 	
 	/**
@@ -128,22 +130,12 @@ public class Navigation extends Thread {
 			leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, theta - 360), true);
 			rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, theta -360), false);
 		}
-		else {
+		else {  //go straight otherwise
 			leftMotor.rotate(convertAngle(WHEEL_RAD, TRACK, theta), true);
 			rightMotor.rotate(-convertAngle(WHEEL_RAD, TRACK, theta), false);
 		}
 		
 	}
 	
-	/**
-	 * A method to determine whether another thread has called travelTo and turnTo methods or not
-	 * 
-	 * @return
-	 */
-//	private boolean isNavigating() {
-//		//TODO: Complete
-//		return false;
-//	}
-
 	
 }

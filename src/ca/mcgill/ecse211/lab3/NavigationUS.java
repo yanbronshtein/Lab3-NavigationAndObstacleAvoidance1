@@ -2,7 +2,14 @@ package ca.mcgill.ecse211.lab3;
 
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.motor.EV3MediumRegulatedMotor;
-
+/**
+ * <h1> Lab3 - Navigation And Obstacle Avoidance </h1>
+ * This class implements motion with obstacle avoidance with the aid of an EV3 Ultrasonic Motor on a rotating axle
+ * 
+ * @author Yaniv Bronshtein
+ * @author Varad Kothari
+ * @version 1.0
+ *  */
 public class NavigationUS extends Thread implements UltrasonicController {
 
 	// vehicle variables
@@ -52,9 +59,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 		return this.distance;
 	}
 	
-//	public int getDistance() {
-//		
-//	}
+
 
 	/**
 	 * Processes our sensor data and acts accordingly based on its readings
@@ -215,7 +220,9 @@ public class NavigationUS extends Thread implements UltrasonicController {
 
 
 	/**
-	 * A method to filter out invalid samples of data
+	 * A method to filter out invalid samples of data taken from PController filter in lab 1
+	 * @param distance
+	 * @returns
 	 */
 	private void filterData(int distance) {
 		// rudimentary filter - toss out invalid samples corresponding to null
@@ -244,24 +251,25 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	 */
 	private void excecuteWallFollow() {
 		// calculate our offset from the bandCenter
-		int error = distance - bandCenter - 5; // -5 for distance from sensor to side of vehicle
+//		int error = distance - bandCenter - 5; // -5 for distance from sensor to side of vehicle
+		int error = distance - bandCenter + 5; // -5 for distance from sensor to side of vehicle
 
 		// Keep moving forward if vehicle is within threshold value
 		if ( Math.abs(error) < this.bandwidth ) {
-			steerStraight();
+			goStraight();
 		} 
 		// We are too close to the wall, steer vehicle to the right
 		else if ( error < 0 ) {
-			steerRight(); 
+			turnRight(); 
 		} 
 		// We are too far away from the wall
 		else { 
 			if ( error > 100 ) {
 				// It is just sensing something very far away, keep going straight
-				steerStraight(); 
+				goStraight(); 
 			} else {
 				// We are too far from the wall, steer left
-				steerLeft();
+				turnLeft();
 			}
 		}
 	}
@@ -273,7 +281,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	private void prepareForWallFollower() {
 		isNavigating = false;
 		isPassingBlock = true;
-		turnTo(Math.toDegrees(Math.PI/2)); // turn our angle 90 degrees
+		turnTo(90); // turn our angle 90 degrees
 		sensorMotor.setSpeed(100);					
 		sensorMotor.rotate(-100); // turn our sensor toward the wall
 	}
@@ -281,7 +289,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	/**
 	 * Method to steer the vehicle in a straight forward direction
 	 */
-	public void steerStraight() {
+	public void goStraight() {
 		leftMotor.setSpeed(motorHigh);			
 		rightMotor.setSpeed(motorHigh);
 		leftMotor.forward();
@@ -291,7 +299,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	/**
 	 * Method to steer the vehicle right
 	 */
-	public void steerRight() {
+	public void turnRight() {
 		leftMotor.setSpeed(motorHigh);			
 		rightMotor.setSpeed(motorLow);
 		leftMotor.forward();
@@ -301,7 +309,7 @@ public class NavigationUS extends Thread implements UltrasonicController {
 	/**
 	 * Method to steer the vehicle left
 	 */
-	public void steerLeft() {
+	public void turnLeft() {
 		leftMotor.setSpeed(motorLow);			
 		rightMotor.setSpeed(motorHigh);
 		leftMotor.forward();
